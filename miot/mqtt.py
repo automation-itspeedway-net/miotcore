@@ -1,104 +1,188 @@
-# Modular Internet of Things, Core functionality
+# MIOT / MQTT MODULE
+# (C) Copyright Si Dunford, MAR 2019
+# MIT License
 #
-# FILE:     mqtt.py
-# AUTHOR:   (c) Copyright Si.Dunford, 2019
-# VERSION:  19.03.26.1751
-# DATE:     26 March 2019
-# STATE:    BETA
-# LICENSE:  MIT License
-#
-# CHANGE LOG:
-# 15 MAR 2019  0.0.1  Initial build
-# 25 MAR 2019  0.1.1  Revised event handlers
-# 26 MAR 2019  0.1.2  Bug fixes / Removed some debug output
-#              0.1.3  Added config.getfloat(), config.set() and config.write()
-# 27 MAR 2019  0.2.1  New version control, move from sandbox to miot
-# 05 JUL 2020  0.3.1  Revision 3
+# VERSION: 2.0
 
 # THIRD PARTY MODULES
 import paho.mqtt.client as paho_mqtt
 
+# VARIABLES
+ERROR_MESSAGES = {
+    '0':'Success',
+    '1':'Incorrect protocol version',
+    '2':'Invalid client identifier',
+    '3':'Server unavailable',
+    '4':'Bad username or password',
+    '5':'Not authorised',
+    }
 
-# Default connect method
-def mqtt_connect( client, userdata, flags, rc ):
-    print "Connected"
+# Default methods
+def on_connect( client, userdata, flags, rc ):
+    this = userdata
     if rc==0:    # Connected successfully
-        # Subscribing in on_connect() means that if we lose the connection and
-        # reconnect then subscriptions will be renewed.
-        print "Listening on", userdata.topic
-        client.subscribe( userdata.topic )
-    else:
-        print("Connection refused: Result code "+str(rc))
-        if rc==1:
-            print "  Incorrect protocol version"
-        elif rc==2:
-            print "  Invalid client identifier"
-        elif rc==3:
-            print "  Server unavailable"
-        elif rc==4:
-            print "  Bad username or password"
-        elif rc==5:
-            print "  Not authorised"
-        else:
-            print "Result code",rc
+        #print("CONNECT : "+str(userdata)+" : "+str(rc))
+        this.send( 'connect', { 'id':0, 'message':'Success' } )
+        this.isconnected = True
+    else:       # Connected with error
+        this.send( 'error', { 'id':rc, 'message':'Connection Refused' } )
+        
+def on_disconnect( client, userdata, rc ):
+    this = userdata
+    this.isconnected = False
+    this.send( 'disconnect', { 'id':rc, 'message':'Disconnected' } )
 
+def on_message( client, userdata, msg):
+    #print("MESSAGE : "+str(userdata)+" : "+str(msg))
+    this = userdata
+    payload = str(msg.payload.decode())
+    topic = msg.topic           
+    this.send( 'message', { 'topic':topic, 'message':payload } )
 
+def on_subscribe( client, userdata, mid, granted_qos ):
+    #print("SUBSCRIBE : "+str(userdata)+" : "+str(mid))
+    this = userdata
+    this.send( 'subscribe', { 'mid':mid } )
 
+def on_unsubscribe( client, userdata, mid, granted_qos ):
+    #print("UNSUBSCRIBE : "+str(userdata)+" : "+str(mid))
+    this = userdata
+    this.send( 'unsubscribe', { 'mid':mid } )
+
+def on_publish( client, userdata, mid ):
+    #print("PUBLISH : "+str(userdata)+" : "+str(mid))
+    this = userdata
+    this.send( 'publish', { 'mid':mid } )
+    
 # WRAPPER FOR PAHO MQTT
-class MQTT:
-
-    def __init__( self, config ):
-        self.broker = config.get( 'MQTT','broker','127.0.0.1' )
-        self.port = config.getint( 'MQTT','port',1883 )
-        self.username = config.get( 'MQTT','username','' )
-        self.password = config.get( 'MQTT','password','' )
-        self.clientid = '' # Use random client ID
-        self.topic = "miot"
-        self.on_connect = mqtt_connect
-        self.on_disconnect = None
-        self.on_message = None
-        self.on_publish = None
-        self.on_subscribe = None
-
-    def forever( self, topic='', message_handler=None ):
-        # Process arguments
-        if not topic=='':
-            self.topic = topic
-        if not message_handler==None:
-            self.on_message=message_handler
-
-        # Create MQTT object with optional authentication
-        self.mqtt = paho_mqtt.Client( self.clientid )
-        if not self.username=='':
-            print 'Using Authentication...'
-            self.mqtt.username_pw_set(username=self.username,password=self.password)
-
+class broker:
+    
+    def __init__(self, appname='', clean_session=True ):
+                    
+        self.eventlist = {}
+        self.hostname  = '127.0.0.1'
+        self.hostport  = 1883
+        self.username  = ''
+        self.password  = ''
+        self.clientid  = ''
+        self.root      = 'miot'
+        
+        try:
+            self.client = paho_mqtt.Client( appname, clean_session=clean_session )
+        except Exception as e: raise
+        
         # Set userdata to self
-        self.mqtt.user_data_set(self)
+        self.client.user_data_set( self )
+        
+        # Connect handlers
+        self.client.on_connect     = on_connect
+        self.client.on_disconnect  = on_disconnect
+        self.client.on_message     = on_message
+        self.client.on_publish     = on_publish
+        self.client.on_subscribe   = on_subscribe     
+        self.client.on_unsubscribe = on_unsubscribe     
 
-        # Assign event handlers
-        if not self.on_connect==None:
-            self.mqtt.on_connect=self.on_connect
-        if not self.on_disconnect==None:
-            self.mqtt.on_disconnect=self.on_disconnect
-        if not self.on_message==None:
-            self.mqtt.on_message=self.on_message
-        if not self.on_publish==None:
-            self.mqtt.on_publish=self.on_publish
-        if not self.on_subscribe==None:
-            self.mqtt.on_subscribe=self.on_subscribe
+    def authenticate( self, username, password ):
+        self.username=username
+        self.password=password
 
-        # Connect to MQTT broker
-        self.mqtt.connect( self.broker, self.port )
-        self.mqtt.loop_forever()
+    # Add event handler
+    def on( self, event, handler ):
+        #print( "adding '"+event+ "' event handler" )
+        event = event.lower()
+        if event not in self.eventlist: self.eventlist[event]=[]
+        try:  # Check not already in list
+            index = self.eventlist[event].index( handler )
+        #    print( "- already exists" )
+        except ValueError as e:
+            # Not in list, so add it.
+            self.eventlist[event].append( handler )
+        #print( str(self.eventlist[event]) )
+        #    print( "- appended" )
+        
+    # Remove event handler
+    def off( self, event, handler ):
+        #print( "removing '"+event+ "' event handler" )
+        event = event.lower()
+        if event in self.eventlist:
+            try:
+                self.eventlist[event].remove( handler ) 
+                #print( "- removed" )
+            except ValueError as e:
+                #print( "- not in list" )
+                pass
+        #else:
+        #    print( "- handler does not exist" )
+    
+    # Send a message to event handlers
+    def send( self, event, message ):
+        if event not in self.eventlist: return
+        for handler in self.eventlist[ event ]:
+            #print( "- "+event+" handler found" )
+            handler( self, message )
 
+    # Convert error numbers into error strings
+    def error( self, id ):
+        return ERROR_MESSAGES.get( str(id), "Failure" )
 
-# CONFIG FILE
-CONFIGFILE = 'config.ini'
-#os.path.join( 'etc','opt','miot','config.ini' )
-config = Config( CONFIGFILE )
+    # Connect to the broker
+    def connect( self, host='127.0.0.1', port=1883 ):
+        
+        self.hostname  = host
+        self.hostport  = port
 
-# MQTT
-mqtt = MQTT( config )
+        # User authentication
+        if self.username != '':
+            print( "- MQTT: "+self.username+"@"+self.hostname+":"+str(self.hostport) )    
+            self.client.username_pw_set( self.username, self.password )
+        else:
+            print( "- MQTT: "+self.hostname+":"+str(self.hostport) )    
 
+        # Connect to broker
+        try:
+            self.client.connect( self.hostname, self.hostport , 60 )
+        except Exception as e:
+            #logging.critical( str(e) )
+            print( e )
+            return False
 
+    # Are we connected?
+    def connected():
+        return self.isconnected
+
+    # Gracefully disconnect
+    def disconnect( self ):
+        self.client.disconnect()
+
+    # Subscribe to one or more topics
+    # Supported formats:
+    #   subscribe( '/my/topic' )    = Always uses QOS=0
+    #   subscribe( ('my/topic',0) ) = Second arg in tuple is QOS
+    #   subscribe( [('my/topic',0),('your/topic',2)] )
+    #
+    # Returns tuple (result, mid)
+    def subscribe( self, topic ):
+        if isinstance( topic, str ):
+            topic = ( topic, 0 )    # Convert to tuple
+        return self.client.subscribe( topic )
+    
+    # Subscribe to one or more topics
+    def unsubscribe( self, topic ):
+        return self.client.unsubscribe( topic )
+
+    # SYNCRONOUS - Wait forever
+    def wait( self ):
+        self.client.loop_forever()
+
+    # ASYNCHRONOUS - Start thread
+    def start( self ):
+        self.client.loop_start() 
+    
+    # ASYNCHRONOUS - Stop thread
+    def stop( self ):
+        self.client.disconnect()
+        self.client.loop_stop()
+
+    # MANUAL - Manual loop
+    def dispatch( self ):
+        self.client.loop()

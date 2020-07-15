@@ -1,5 +1,7 @@
 # Test the config module
 # (c) Copyright Si Dunford, Jul 2020
+#
+# VERSION 1.1
 
 from miot import config
 

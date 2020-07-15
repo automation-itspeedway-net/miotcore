@@ -3,11 +3,11 @@
 
 # Modular Internet of Things
 # Command line utility / REPL
+# (c) Copyright Si Dunford, Mar 2019
+#
 # STATE: Pre-Alpha
 
-print( "MIOT REPL, PRE-ALPHA" )
-
-from miotcore import config
+from miot import config,mqtt
 
 VERSION = '0.1.5'
 

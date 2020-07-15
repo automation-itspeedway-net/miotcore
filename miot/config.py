@@ -1,20 +1,13 @@
-# CONFIG MODULE
-# Part of the MIOT package
-#
+# MIOT / CONFIG MODULE
 # (C) Copyright Si Dunford, JUN 2020
+# MIT License
 #
 # VERSION: 1.0
 
-""" CHANGE CONTROL
-1.0  05 JUL 2020  Creation. 
-                  load(), save(), get(), set(), tostring(), wipe()
-                  default(), __getkey(), __setkey()
-1.1  05 JUN 2020  Added exist(), exists(), __walk()
-                  Moved config file from /etc to ~/.config
-"""
-
+# THIRD PARTY MODULES
 import json,os
 
+# VARIABLES
 CONFIG_FILE = os.path.expanduser( "~/.config/miot.cfg" )
 __data = {}
 
