@@ -1,8 +1,8 @@
-# miot-core
+# miot
 Modular Internet of Things - Core modules
 
 STATUS:  PRE-ALPHA  ** UNSTABLE DO NOT INSTALL **
-VERSION: 1.0.3.1
+VERSION: 1.0.3.3
     - WARNING - Unstable development version
     - Not feature complete
     - Under development

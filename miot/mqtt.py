@@ -154,6 +154,9 @@ class broker:
     def disconnect( self ):
         self.client.disconnect()
 
+    def publish( self, topic, message ):
+        return self.client.publish( topic, message )
+
     # Subscribe to one or more topics
     # Supported formats:
     #   subscribe( '/my/topic' )    = Always uses QOS=0

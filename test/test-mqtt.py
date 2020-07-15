@@ -20,6 +20,9 @@ def on_connect( broker, msg ):
     # Subscribe to topic
     result,mid = broker.subscribe( '#' )
     print( "- Subscribed with mid="+str(mid) )
+    
+    # Send message
+    broker.publish( "miot/event", "test-mqtt.py connected" )
 
 def on_disconnect( broker, msg ):
     print( "# Disconnect", broker.hostname, str(msg ) )

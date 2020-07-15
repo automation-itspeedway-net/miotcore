@@ -13,7 +13,7 @@ __data = {}
 
 def default():
     global __data
-    print( "* loading default values" )
+    #print( "* loading default values" )
     __data = {
         'mqtt':{
             'default':{'host':'127.0.0.1','port':1883}
@@ -46,27 +46,27 @@ def __getkey( keys, config, alt ):
 def __setkey( keys, config, value ):
     if len(keys)==0: return
 
-    print( "* finding "+keys[0]+" in "+str(config) )
+    #print( "* finding "+keys[0]+" in "+str(config) )
     # Check for key
     if keys[0] in config:
-        print( "found "+keys[0]+" in "+str(config) )
-        print( keys[1:] )
+        #print( "found "+keys[0]+" in "+str(config) )
+        #print( keys[1:] )
         if len(keys)==1:
-            print( "THIS IS IT" )
+            #print( "THIS IS IT" )
             config[keys[0]]=value
             return
         __setkey( keys[1:], config[keys[0]], value )
         return
 
     # Check for 'default'
-    print( "Checking for default value" )
+    #print( "Checking for default value" )
     if 'default' in config:
-        print( "Default found" )
+        #print( "Default found" )
         __setkey( keys, config['default'], value )
         return
 
     # Failed to find key
-    print( "failed to find "+keys[0]+" in "+str(config) )
+    #print( "failed to find "+keys[0]+" in "+str(config) )
     if len(keys)==1:
         config[keys[0]]=value
         return
@@ -91,21 +91,21 @@ def __walk( config, keys, allow_default=True ):
     
 def get( key, alt='' ):
     global __data
-    print( "Searching for '"+key+"' ['"+alt+"']" )
+    #print( "Searching for '"+key+"' ['"+alt+"']" )
     keys = key.split(".")
-    print( keys )
+    #print( keys )
     return __getkey( keys, __data, alt )
 
 def set( key, value ):
     global __data
-    print("")
-    print( "Setting '"+key+"' to '"+str(value)+"'" )
-    print(__data)
+    #print("")
+    #print( "Setting '"+key+"' to '"+str(value)+"'" )
+    #print(__data)
     keys = key.split(".")
-    print( keys )
+    #print( keys )
     __setkey( keys, __data, value )
-    print( "-RESULT")
-    print( json.dumps( __data ) )
+    #print( "-RESULT")
+    #print( json.dumps( __data ) )
 
 def exist( key, allow_default=False ):
     global __data
@@ -117,12 +117,12 @@ def exists( key, allow_default=False ):
     
 def load():
     global __data
-    print( "LOADING" )
+    #print( "LOADING" )
     try:
         with open( CONFIG_FILE, 'r') as cfg:
             __data = json.load(cfg)
     except:
-        print( "Failed to load config" )
+        #print( "Failed to load config" )
         #default()
         pass
     if __data == {}:
@@ -131,8 +131,8 @@ def load():
 def save():
     global __data
     #__data={}
-    print( "SAVING" )
-    print( json.dumps( __data ) )
+    #print( "SAVING" )
+    #print( json.dumps( __data ) )
     with open( CONFIG_FILE, 'w' ) as cfg:
         json.dump( __data, cfg, indent=4, sort_keys=True )
 
@@ -146,7 +146,7 @@ def tostring( indent=4, sort=True ):
     
 """ INITIALISE MODULE """
 
-print( "config.init()" )
+#print( "config.init()" )
 load()
-print( json.dumps( __data ) )
+#print( json.dumps( __data ) )
 
