@@ -6,6 +6,7 @@
 
 # THIRD PARTY MODULES
 import paho.mqtt.client as paho_mqtt
+from miot import log
 
 # VARIABLES
 ERROR_MESSAGES = {
@@ -19,13 +20,17 @@ ERROR_MESSAGES = {
 
 # Default methods
 def on_connect( client, userdata, flags, rc ):
-    this = userdata
-    if rc==0:    # Connected successfully
-        #print("CONNECT : "+str(userdata)+" : "+str(rc))
-        this.send( 'connect', { 'id':0, 'message':'Success' } )
-        this.isconnected = True
-    else:       # Connected with error
-        this.send( 'error', { 'id':rc, 'message':'Connection Refused' } )
+    try:
+        this = userdata
+        if rc==0:    # Connected successfully
+            #print("CONNECT : "+str(userdata)+" : "+str(rc))
+            this.send( 'connect', { 'id':0, 'message':'Success' } )
+            this.isconnected = True
+        else:       # Connected with error
+            this.send( 'error', { 'id':rc, 'message':'Connection Refused' } )
+    except Exception as e:
+        print(e)
+        log.exception( "Exception", e )
         
 def on_disconnect( client, userdata, rc ):
     this = userdata

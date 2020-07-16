@@ -40,41 +40,57 @@ def repl():
 ## MQTT SUPPORT
 
 def on_error( broker, error ):
-    err = str(error['id'])
-    print( "! {} | ({}) {} | {}".format( broker.hostname, err, error['message'], broker.error( err ) ))
-
+    try:
+        print( "Error" )
+        err = str(error['id'])
+        print( "! {} | ({}) {} | {}".format( broker.hostname, err, error['message'], broker.error( err ) ))
+    except Exception as e:
+        print( e )
+        
 def on_connect( broker, msg ):
+    print("Connected")
     print( "! {} | Connected".format( broker.hostname ) )
 
 def on_message( broker, msg ):
+    print( "Message" )
     print( "! {} | {} | {}".format( broker.hostname, msg['topic'], msg['topic'] ))
 
 def connect( host ):
-    global brokers
-    if host in brokers:
-        return brokers[host]
-    #
-    if( host=='' ):
-        hostip   = config.get( "mqtt.host" )
-        port     = config.get( "mqtt.port" )
-        username = config.get( "mqtt.username" )
-        userpass = config.get( "mqtt.password" )
-    else:
-        hostip   = config.get( "mqtt.{}.host".format( host ) )
-        port     = config.get( "mqtt.{}.port".format( host ) )
-        username = config.get( "mqtt.{}.username".format( host ) )
-        userpass = config.get( "mqtt.{}.password".format( host ) )
-    #
-    broker = mqtt.broker()
-    broker.authenticate( username, userpass )
-    broker.on( 'error', on_error )
-    broker.on( 'connect', on_connect )
-    broker.on( 'message', on_message )
-    broker.connect( hostip, port )
-    #
-    brokers[host]=broker
-    return broker
-    
+    try:
+        global brokers
+        brokerkey = host
+        if brokerkey=='': brokerkey='default'
+        if brokerkey in brokers:
+            print( "- Using saved host" )
+            return brokers[brokerkey]
+        #
+        if( host=='' ):
+            hostip   = config.get( "mqtt.host" )
+            port     = config.get( "mqtt.port" )
+            username = config.get( "mqtt.username" )
+            userpass = config.get( "mqtt.password" )
+        else:
+            hostip   = config.get( "mqtt.{}.host".format( host ) )
+            port     = config.get( "mqtt.{}.port".format( host ) )
+            username = config.get( "mqtt.{}.username".format( host ) )
+            userpass = config.get( "mqtt.{}.password".format( host ) )
+        #
+        print( "  HOST:     "+host )
+        print( "  BROKER:   {}:{}".format(hostip,port) )
+        print( "  USERNAME: "+username )
+        
+        broker = mqtt.broker()
+        broker.authenticate( username, userpass )
+        broker.on( 'error',   on_error )
+        broker.on( 'connect', on_connect )
+        broker.on( 'message', on_message )
+        broker.connect( hostip, port )
+        #
+        brokers[brokerkey]=broker
+        return broker
+    except Exception as e:
+        print( e )
+        
 ## COMMANDS
 
 def exist( args, cmd ):
@@ -120,6 +136,7 @@ def set( args, cmd ):
     value = " ".join(args)
     config.set( key, value )
     config.save()
+    print( key+" = '"+str(value)+"'" )
 
 def subscribe( args, cmd ):
     print( str(len(args)) + " arguments" )
@@ -159,9 +176,7 @@ def publish( args, cmd ):
     else:
         die( 'Missing parameter: publish [broker] <topic> "<message>"' )
         
-    #print( "BROKER:  "+host )
-    #print( "TOPIC:   "+topic )
-    #print( "MESSAGE: "+message )
+
         
     broker = connect( host )
     #broker = mqtt.broker()
