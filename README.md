@@ -2,17 +2,35 @@
 Modular Internet of Things - Core modules
 
 STATUS:  PRE-ALPHA  ** UNSTABLE DO NOT INSTALL **
-VERSION: 1.0.3.3
+
+VERSION: 1.0.3.5
     - WARNING - Unstable development version
     - Not feature complete
     - Under development
     - Not ready for internal testing
 
+A Pre-Alpha release:
+* Is still under development and considered unstable
+* May have had limited or no internal testing.
+* May not be feature complete
+* May have features that are partially complete or not working. 
+* May have known or unknown bugs
+* May operate in an unexpected way. 
+* May contain output debugging data to logs or screen.
+* Is NOT supported: Use at your own risk.
+
+Please do not raise tickets for bugs found in this release.
+
 # INFORMATION
 
-These are the core modules that are used by the miot suite of modules for the inter net of things which are designed to be a DIY home automation system where you choose which components you need.
+These are the core modules that are used by MIoT.
 
-This project should be installed using the 'miot' shell which is available [on github][https://github.com/automation-itspeedway-net/miot].
+More information about MIoT is available from it's [project page on github][https://github.com/automation-itspeedway-net/miot].
+
+# FEATURES:
+
+* Central modules for mqtt, logs and config used by other packages
+* Adds functionality by means of REPL to 'miot' shell command
 
 # PLATFORMS
 
@@ -47,15 +65,6 @@ This project should be installed using the 'miot' shell which is available [on g
 
     ~/miot/setup
     
-# DEVELOPMENT LOG
-DATE         VER         STATUS
-15 MAR 2019  MIOT        0.0      Initial Outline
-25 MAR 2019  MIOT CORE   0.1.1    PRE-ALPHA
-26 MAR 2019  MIOT CORE   0.1.2    PRE-ALPHA
-26 MAR 2019  MIOT CORE   0.1.3    PRE-ALPHA
-27 MAR 2019  MIOT CORE   1.0.0    PRE-ALPHA
-04 JUL 2020  MIOT CORE   1.0.1    PRE-ALPHA
-11 JUL 2020  MIOT CORE   1.0.2    PRE-ALPHA
-11 JUL 2020  MIOT CORE   1.0.3    PRE-ALPHA
-12 JUL 2020  MIOT CORE   1.0.3.1  PRE-ALPHA
+# KNOWN BUGS
 
+* Pre-Alpha versions will contain known and unknown bugs.

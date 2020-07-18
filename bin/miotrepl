@@ -10,7 +10,7 @@
 import sys
 from miot import config,mqtt
 
-VERSION = '0.1.5'
+VERSION = '0.1.6'
 
 brokers = {}
 
@@ -25,43 +25,52 @@ def die( message, subtext='', pointer=0 ):
 
 def repl():
     print( "Welcome to Modular IoT" )
+    print( "V"+str(VERSION) )
     print( "Type 'quit' to exit, or 'help' for assistance." )
+    print( "" )
     running = True
-    while running:
-        value = input( ":" )
-        if value!='':
-            cmd = value.split(" ")
-            if cmd[0]=='quit': 
-                running = False
-            else:
-                func = CMDswitcher.get( cmd[0], unknown_repl )
-                func( cmd[1:], cmd[0] )
-
+    try:
+        while running:
+            value = input( ":" )
+            if value!='':
+                cmd = value.split(" ")
+                if cmd[0]=='quit': 
+                    running = False
+                else:
+                    func = CMDswitcher.get( cmd[0], unknown_repl )
+                    func( cmd[1:], cmd[0] )
+    except KeyboardInterrupt:
+        print("")
+        print( "- Bye!" )
+        sys.exit()
+    except Exception as e:
+        print(e)
+        
 ## MQTT SUPPORT
 
 def on_error( broker, error ):
     try:
-        print( "Error" )
+        #print( "Error" )
         err = str(error['id'])
-        print( "! {} | ({}) {} | {}".format( broker.hostname, err, error['message'], broker.error( err ) ))
+        print( "!ERROR: {} | ({}) {} | {}".format( broker.hostname, err, error['message'], broker.error( err ) ))
     except Exception as e:
         print( e )
         
 def on_connect( broker, msg ):
-    print("Connected")
-    print( "! {} | Connected".format( broker.hostname ) )
+    #print("Connected")
+    print( "!CONNECTED: {}".format( broker.hostname ) )
 
 def on_message( broker, msg ):
-    print( "Message" )
-    print( "! {} | {} | {}".format( broker.hostname, msg['topic'], msg['topic'] ))
+    #print( "Message" )
+    print( "!MESSAGE: {} | {} | {}".format( broker.hostname, msg['topic'], msg['message'] ))
 
-def connect( host ):
+def connect( host='default' ):
     try:
         global brokers
         brokerkey = host
         if brokerkey=='': brokerkey='default'
         if brokerkey in brokers:
-            print( "- Using saved host" )
+            #print( "- Using saved host" )
             return brokers[brokerkey]
         #
         if( host=='' ):
@@ -75,9 +84,9 @@ def connect( host ):
             username = config.get( "mqtt.{}.username".format( host ) )
             userpass = config.get( "mqtt.{}.password".format( host ) )
         #
-        print( "  HOST:     "+host )
-        print( "  BROKER:   {}:{}".format(hostip,port) )
-        print( "  USERNAME: "+username )
+        #print( "  HOST:     "+host )
+        #print( "  BROKER:   {}:{}".format(hostip,port) )
+        #print( "  USERNAME: "+username )
         
         broker = mqtt.broker()
         broker.authenticate( username, userpass )
@@ -86,10 +95,24 @@ def connect( host ):
         broker.on( 'message', on_message )
         broker.connect( hostip, port )
         #
+        broker.start()  # Start ASYNC MODE
+        #
         brokers[brokerkey]=broker
         return broker
     except Exception as e:
         print( e )
+
+def disconnect( brokerkey ):
+    global brokers
+    if brokerkey=='': brokerkey='default'
+    if brokerkey in brokers:
+        brokers[brokerkey].stop()
+        del brokers[brokerkey]
+
+def disconnectall():
+    global brokers
+    for key,value in list(brokers.items()):
+        disconnect( key )
         
 ## COMMANDS
 
@@ -139,52 +162,32 @@ def set( args, cmd ):
     print( key+" = '"+str(value)+"'" )
 
 def subscribe( args, cmd ):
-    print( str(len(args)) + " arguments" )
-    if len(args)==1:
-        host     = ''
-        topic    = args[0]
-    elif len(args)==2:
-        host     = args[0]
-        topic    = args[1]
-    else:
-        die( 'Missing parameter: subscribe [broker] <topic>' )
+    #print( str(len(args)) + " arguments" )
         
-    print( "BROKER:  "+host )
-    print( "TOPIC:   "+topic )
-    
-    broker = connect( host )
+    if len(args)<1:
+        print( 'Missing parameter: subscribe <topic>' )
+        return
+    elif len(args)==1:    # TOPIC ONLY
+        topic    = args[0]
+    else:
+        print( 'Invalid number of arguments: subscribe <topic>' )
+        return
+        
+    broker = connect()
     broker.subscribe( topic )
     
 def publish( args, cmd ):
     #print( str(len(args)) + " arguments" )
-    if len(args)==2:
-        host     = ''
-        topic    = args[0]
-        message  = args[1]
-        #hostip   = config.get( "mqtt.host" )
-        #port     = config.get( "mqtt.port" )
-        #username = config.get( "mqtt.username" )
-        #userpass = config.get( "mqtt.password" )
-    elif len(args)==3:
-        host     = args[0]
-        topic    = args[1]
-        message  = args[2]
-        #hostip   = config.get( "mqtt.{}.host".format( host ) )
-        #port     = config.get( "mqtt.{}.port".format( host ) )
-        #username = config.get( "mqtt.{}.username".format( host ) )
-        #userpass = config.get( "mqtt.{}.password".format( host ) )
+    if len(args)<1:
+        print( 'Missing parameter: subscribe <topic>' )
+        return
     else:
-        die( 'Missing parameter: publish [broker] <topic> "<message>"' )
+        topic    = args.pop(0)
+        message  = " ".join(args)
         
-
-        
-    broker = connect( host )
-    #broker = mqtt.broker()
-    #broker.authenticate( username, userpass )
-    #broker.connect( hostip, port )
-    
+    broker = connect()
     broker.publish( topic, message )
-    print( "Published to {}.".format( topic ) )
+    print( "- Published to {}.".format( topic ) )
     
 def unsubscribe( args, cmd ):
     pass
@@ -217,13 +220,15 @@ CMDswitcher = {
     "version":version 
 }
 
-# PROCESS ARGUMENTS
-if len(sys.argv) <= 1:
-    repl()
-    sys.exit(0)
+if __name__=="__main__":
 
-func = CMDswitcher.get( sys.argv[1], unknown_cli )
-func( sys.argv[2:], sys.argv[1] )
+    # PROCESS ARGUMENTS
+    if len(sys.argv) <= 1:
+        repl()
+        sys.exit(0)
+
+    func = CMDswitcher.get( sys.argv[1], unknown_cli )
+    func( sys.argv[2:], sys.argv[1] )
 
 
 

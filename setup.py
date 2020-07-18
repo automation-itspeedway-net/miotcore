@@ -4,7 +4,7 @@
 import setuptools
 from setuptools.command.install import install
 
-VERSION_NUMBER = '1.0.3.3'
+VERSION_NUMBER = '1.0.3.5'
 VERSION_STATUS = 'Development Status :: 2 - Pre-Alpha'
 
 #Development Status :: 1 - Planning

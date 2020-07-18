@@ -132,19 +132,19 @@ class broker:
 
     # Connect to the broker
     def connect( self, host='127.0.0.1', port=1883 ):
-        
-        self.hostname  = host
-        self.hostport  = port
-
-        # User authentication
-        if self.username != '':
-            print( "- MQTT: "+self.username+"@"+self.hostname+":"+str(self.hostport) )    
-            self.client.username_pw_set( self.username, self.password )
-        else:
-            print( "- MQTT: "+self.hostname+":"+str(self.hostport) )    
-
-        # Connect to broker
+        print( "--connecting")
         try:
+            self.hostname  = host
+            self.hostport  = port
+
+            # User authentication
+            if self.username != '':
+                print( "- MQTT: "+self.username+"@"+self.hostname+":"+str(self.hostport) )    
+                self.client.username_pw_set( self.username, self.password )
+            else:
+                print( "- MQTT: "+self.hostname+":"+str(self.hostport) )    
+
+            # Connect to broker
             self.client.connect( self.hostname, self.hostport , 60 )
         except Exception as e:
             #logging.critical( str(e) )
