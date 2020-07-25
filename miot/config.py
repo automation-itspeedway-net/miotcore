@@ -16,7 +16,7 @@ def default():
     #print( "* loading default values" )
     __data = {
         'mqtt':{
-            'default':{'host':'127.0.0.1','port':1883}
+            'default':{'host':'127.0.0.1','port':1883,'root':'home'}
             },
         'system':{
             'root':'home'

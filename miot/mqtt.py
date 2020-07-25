@@ -2,7 +2,7 @@
 # (C) Copyright Si Dunford, MAR 2019
 # MIT License
 #
-# VERSION: 2.0
+# VERSION: 0.2.1
 
 # THIRD PARTY MODULES
 import paho.mqtt.client as paho_mqtt
@@ -194,3 +194,10 @@ class broker:
     # MANUAL - Manual loop
     def dispatch( self ):
         self.client.loop()
+        
+    # Last will and testament
+    # Call this BEFORE connect()
+    def lwt( self, topic, message ):
+        self.client.will_set( topic, payload=message, qos=0, retain=True )
+        
+    
