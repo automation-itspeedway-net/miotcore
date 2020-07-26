@@ -4,7 +4,7 @@
 import setuptools
 from setuptools.command.install import install
 
-VERSION_NUMBER = '1.0.3.6'
+VERSION_NUMBER = '1.0.3.7'
 VERSION_STATUS = 'Development Status :: 2 - Pre-Alpha'
 
 #Development Status :: 1 - Planning
@@ -20,7 +20,7 @@ with open("README.md", "r") as fh:
        
 class CustomInstaller(install):
     def run(self):
-        import os,sys
+        import os,sys,shutil
         
         print( "Installing MIOT core modules" )
         # Pre-Install
@@ -32,7 +32,19 @@ class CustomInstaller(install):
         print( "- Platform: "+sys.platform )
         #if sys.platform in ['darwin', 'linux']:
         #    os.system('./linux_installer.sh')
-
+        
+        # Create (if not exist) bin folder
+        #binfolder = os.path.join( '~', 'bin' )
+        #binfolder = os.path.expanduser( binfolder )
+        #try:
+        #    os.makedirs( binfolder )
+        #except OSError as e:
+        #    if e.errno != errno.EEXIST:
+        #        raise
+            
+        # Copy miot to bin folder
+        #shutil.copy( install['path'],binfolder )
+                    
 setuptools.setup(
     name='miot',  
     version=VERSION_NUMBER,
@@ -58,7 +70,7 @@ setuptools.setup(
         ],
     include_package_data=True,
     python_requires='>=3.6',
-    scripts=['bin/miotrepl'],
+    scripts=['scripts/miot','scripts/miotrepl.py'],
     cmdclass={
         'install':CustomInstaller
         }

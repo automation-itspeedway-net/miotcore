@@ -37,8 +37,7 @@ DATE         VERSION
     - Bug fixes
 18 JUL 2020  1.0.3.5
     - Bug fixes
-
-NEXT 1.0.3.6
+25 JUL 2020  1.0.3.6
     - miot.config: Added default mqtt.root variable
     - miot.mqtt: Added lwt()
     - miotrepl:
@@ -46,5 +45,8 @@ NEXT 1.0.3.6
         Added ANSI color to MQTT messages and Errors
         Bug fixes
         Several improvements
-    
+26 JUL 2020  1.0.3.7
+    - Moved scripts from bin to scripts
+    - included miot (shell script)
+
 ## ALPHA RELEASES
