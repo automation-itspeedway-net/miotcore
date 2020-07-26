@@ -234,12 +234,17 @@ def subscribe( args ):
 
 def unknown( args ):
     die( COLOR(YELLOW)+"- Unknown command: {}".format(args[0]) )
-     
+        
 #def update( args ):
 #    print( COLOR(WHITE)+"UPDATE")
 
 def version( args ):
     print( COLOR(WHITE)+"Version: "+VERSION )
+
+# DAEMON
+def start_daemon( args )
+    print( "- Starting daemon" )
+    pass
 
 # COMMAND SWITCHER
 CMDswitcher = { 
@@ -251,7 +256,8 @@ CMDswitcher = {
     "set":set,
     "show":get,
     "subscribe":subscribe,
-    "version":version 
+    "version":version,
+    "--daemon":start_daemon
 }
 # "list":list,
 # "update":update, 
@@ -266,7 +272,3 @@ if __name__=="__main__":
 
     func = CMDswitcher.get( sys.argv[1], unknown )
     func( sys.argv[1:] )
-
-
-
-

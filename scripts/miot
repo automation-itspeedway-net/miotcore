@@ -2,7 +2,7 @@
 
 # MODULAR INTERNET OF THINGS
 # (c) Copyright Si Dunford, Jun 2020
-VERSION=0.2.4
+VERSION=0.2.5
 # https://github.com/automation-itspeedway-net/miot
 
 echo "MODULAR IoT / CLI"
@@ -28,21 +28,27 @@ show_help()
 go_systemctl()
 {
     echo
-    sudo systemctl $1 miot_$2
+    if [ "$2" = "" ]; then
+        sudo systemctl $1 miot
+    else
+        sudo systemctl $1 miot_$2
+    fi
 }
 
 go_repl()
 {
-    if [ ! -e ~/miot/venv/bin/miotrepl ]; then
-        #echo "Unknown command: $1"
-        echo "REPL: Not installed."
-        echo
-        echo "- Please run '~/miot/setup'"
-    else    
-        /cd ~/miot
-        #source ./venv/bin/activate
-        miotrepl.py $@
-    fi
+    type miot.py >/dev/null 2>&1 || { echo >&2 "- MIoT REPL isn't working; please re-install."; exit 1; 
+
+    #if [ ! -e ~/miot/venv/bin/miotrepl ]; then
+    #   #echo "Unknown command: $1"
+    #    echo "REPL: Not installed."
+    #    echo
+    #    echo "- Please run '~/miot/setup'"
+    #else    
+    #    /cd ~/miot
+    #    #source ./venv/bin/activate
+    miot.py $@
+    #fi
 }
 
 go_install()
@@ -51,53 +57,118 @@ go_install()
     if [ ! -d ~/miot/ ]; then
         mkdir ~/miot
     fi
-    if [ ! "$2" = "" ]; then
-        echo "Installing $2"
-        cd ~/miot
-        if ! git clone https://github.com/automation-itspeedway-net/miot_$2.git
-        then
-            echo >&2 "Failed to install"
-            exit 1
+    if [ "$2" = "" ]; then
+        if [ ! -e /etc/systemd/system/miot.service ]; then
+            # Install MIOT Daemon
+            echo "- Installing MIoT System Daemon"
+
+            echo "[Unit]" > /etc/systemd/system/miot.service
+            echo "Description=MIoT System Daemon" >> /etc/systemd/system/miot.service
+            echo "After=multi-user.target" >> /etc/systemd/system/miot.service
+            echo "" >> /etc/systemd/system/miot.service
+            echo "[Service]" >> /etc/systemd/system/miot.service
+            echo "Type=simple" >> /etc/systemd/system/miot.service
+            echo "WorkingDirectory=~/miot" >> /etc/systemd/system/miot.service
+            echo "ExecStart=miot --daemon" >> /etc/systemd/system/miot.service
+            echo "Restart=on-abort" >> /etc/systemd/system/miot.service
+            echo "StandardOutput=syslog" >> /etc/systemd/system/miot.service
+            echo "StandardError=syslog" >> /etc/systemd/system/miot.service
+            echo "SyslogIdentifier=miot.daemon" >> /etc/systemd/system/miot.service
+            echo "" >> /etc/systemd/system/miot.service
+            echo "[Install]" >> /etc/systemd/system/miot.service
+            echo "WantedBy=multi-user.target" >> /etc/systemd/system/miot.service
+        else
+            echo "- Daemon already installed"
         fi
-        chmod u+rwx miot_$2/miot_$2.service
-        sudo cp miot_$2/miot_$2.service /etc/systemd/system/
     else
-        echo "Module not specified"
+        if [ ! -e /etc/systemd/system/miot_$2.service ]; then
+            # Install MIOT Module Daemon
+            echo "- Installing MIoT module $2"
+            cd ~/miot
+            if ! git clone https://github.com/automation-itspeedway-net/miot_$2.git; then
+                echo >&2 "Failed to install"
+                exit 1
+            fi
+            #chmod u+rwx miot_$2/miot_$2.service
+            #sudo cp miot_$2/miot_$2.service /etc/systemd/system/
+            
+            echo "[Unit]" > /etc/systemd/system/miot_$2.service
+            echo "Description=$2" >> /etc/systemd/system/miot_$2.service
+            echo "After=multi-user.target" >> /etc/systemd/system/miot_$2.service
+            echo "" >> /etc/systemd/system/miot_$2.service
+            echo "[Service]" >> /etc/systemd/system/miot_$2.service
+            echo "Type=simple" >> /etc/systemd/system/miot_$2.service
+            echo "WorkingDirectory=~/miot/$2" >> /etc/systemd/system/miot_$2.service
+            echo "ExecStart=miot --start $2" >> /etc/systemd/system/miot_$2.service
+            echo "Restart=on-abort" >> /etc/systemd/system/miot_$2.service
+            echo "StandardOutput=syslog" >> /etc/systemd/system/miot_$2.service
+            echo "StandardError=syslog" >> /etc/systemd/system/miot_$2.service
+            echo "SyslogIdentifier=$2" >> /etc/systemd/system/miot_$2.service
+            echo "" >> /etc/systemd/system/miot_$2.service
+            echo "[Install]" >> /etc/systemd/system/miot_$2.service
+            echo "WantedBy=multi-user.target" >> /etc/systemd/system/miot_$2.service
+        else
+            echo "- Daemon already installed"
+        fi
     fi
 }
 
 go_remove()
 {
     echo
-    if [ -d ~/miot/miot_$2 ]; then
-        sudo systemctl stop miot_$2
-        sudo systemctl disable miot_$2
-        sudo rm /etc/systemd/system/miot_$2.service
+    if [ "$2" = "" ]; then
+        if[ -e /etc/systemd/system/miot.service ]; then
+            sudo systemctl stop miot
+            sudo systemctl disable miot
+            sudo rm /etc/systemd/system/miot.service
+        fi
+    elif [ -d ~/miot/miot_$2 ]; then
+        if[ -e /etc/systemd/system/miot_$2.service ]; then
+            sudo systemctl stop miot_$2
+            sudo systemctl disable miot_$2
+            sudo rm /etc/systemd/system/miot_$2.service
+        fi
         rm -r "~/miot/miot_$2/"
     fi
 }
 
-#go_setup()
-#{
-#    echo
-#    if [ -d ~/miot ]; then
-#        echo "- Folder exists"
-#    else
-#        echo "- Creating folders"
-#        mkdir ~/miot
-#    fi
-#    cd ~/miot
-#    if [ -e ~/miot/venv/bin/python ]; then
-#        echo "- Virtual environment exists"
-#    else
-#        echo "- Building virtual environment"
-#        python3 -m venv venv
-#    fi
-#    source ./venv/bin/activate
-#    echo "- Installing core components"
-#    python -m pip install --upgrade miot
-#    echo "- Done"
-#}
+go_setup()
+{
+    echo
+    if [ -d ~/miot ]; then
+        echo "- Folder exists"
+    else
+        echo "- Creating folders"
+        mkdir ~/miot
+    fi
+    cd ~/miot
+    if [ -e ~/miot/venv/bin/python ]; then
+        echo "- Virtual environment exists"
+    else
+        echo "- Building virtual environment"
+        python3 -m venv venv
+    fi
+    go_install miot
+    
+    #source ./venv/bin/activate
+    #echo "- Installing core components"
+    #python -m pip install --upgrade miot
+    echo "- Done"
+}
+
+start_daemon()
+{
+    if [ -d ~/miot ]; then
+        echo "Error: Incomplete Installation"
+    elif [ -d ~/miot/miot_$2 ]; then
+        echo "Error: Module is not installed"
+    elif [ ! -e ~/miot/venv/bin/python ]; then
+        echo "Error: Setup not completed"
+    else
+        cd ~/miot/miot_$2
+        ~/miot/venv/bin/python miot_$2/miot_$2.py
+    fi
+}
 
 if [ $# -eq 0 ]; then
     go_repl 
@@ -120,11 +191,14 @@ else
             go_remove $@ 
             exit
             ;;
-        #setup )
-        #    show_header
-        #    go_setup
-        #    exit
-        #    ;;
+        setup )
+            go_setup
+            exit
+            ;;
+        --start )
+            start_daemon
+            exit
+            ;;
         * )
             go_repl $@
             exit

@@ -3,7 +3,7 @@ Modular Internet of Things - Core modules
 
 STATUS:  PRE-ALPHA  ** UNSTABLE DO NOT INSTALL **
 
-VERSION: 1.0.3.7
+VERSION: 1.0.3.8
     - WARNING - Unstable development version
     - Not feature complete
     - Under development
@@ -48,22 +48,26 @@ More information about MIoT is available from it's [project page on github][http
 
 # INSTALLATION
 
-    Please install [miot][https://github.com/automation-itspeedway-net/miot] which will install this component during setup
+    pip3 install --upgrade miot
     
-## Using MIOT/SETUP:
+Check that is it working:
 
-    ~/miot/setup
+    miot version
 
-## Manual method:
+If this fails; you probably need to add  ~/.local/bin to your path. This is a common problem on Debian/Ubuntu/Mint because it is not included by default. Run these commands and then try testing it works again.
 
-    cd ~/miot
-    python3 -m venv venv
-    . ./venv/bin/activate
-    pip install --upgrade miot
+    echo export PATH="$HOME/.local/bin:$PATH">>~/.bashrc
+    source ~/.bashrc
 
+Now that it is working, run setup
+
+    miot setup
+    
 # UPGRADE
 
-    ~/miot/setup
+    miot disable
+    pip3 install --upgrade miot
+    miot enable
     
 # KNOWN BUGS
 
